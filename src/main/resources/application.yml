@@ -1,0 +1,9 @@
+server:
+  port: 7777
+  servlet:
+    context-path: /NoOps-DB
+
+NoOpsDB:
+  cached-path: DbSource.db
+  admin-password: admin123
+  guest-password: guest123

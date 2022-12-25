@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NoOps DB Executor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
+          integrity="sha256-KTPJY0ik6ufLv48oDKCYFYaptcCX75UrmWytfSjy+tA=" crossorigin="anonymous">
+    <link rel="icon" th:href="@{/favicon.ico}">
+    <style>
+        .navbar .brand-logo {
+            transition: .2s ease-in-out transform
+        }
+
+        .navbar .brand-logo:hover {
+            transform: rotate(45deg) scale(1.1)
+        }
+    </style>
+</head>
+
+<body>
+<nav class="navbar bg-light sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}">
+            <img th:src="@{/noops.png}" alt="Logo" width="24" height="24"
+                 class="brand-logo d-inline-block align-text-top">
+            NoOps-DB
+        </a>
+        <div class="dropdown">
+            <a sec:authentication="name" class="navbar-text nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                anonymousUser
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" th:href="@{/logout}">退出</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <form th:action="@{/}" method="post" class="mb-3 needs-validation" novalidate>
+        <div class="d-grid gap-3">
+            <div class="btn-group" role="group">
+                <th:block th:each="dbSource : ${dbSourceList}">
+                    <input th:id="'vbtn-id-' + ${dbSource.id}"
+                           th:value="${dbSource.id}"
+                           th:attr="data-bs-type=${dbSource.type},data-bs-url=${dbSource.url},data-bs-username=${dbSource.username}"
+                           th:checked="${#strings.isEmpty(dbSourceId) ? dbSourceStat.first : dbSource.id == dbSourceId}"
+                           type="radio" class="btn-check" name="dbSourceId" autocomplete="off">
+                    <label th:text="${dbSource.id}" th:attr="for='vbtn-id-' + ${dbSource.id}"
+                           class="btn btn-outline-primary"></label>
+                </th:block>
+                <div sec:authorize="hasRole('ROLE_ADMIN')" class="btn-group">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#dbSourceSaveModal" data-bs-operation="add">新增
+                    </button>
+                    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#dbSourceSaveModal"
+                               data-bs-operation="mod">修改</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                               data-bs-target="#dbSourceDeletionModal" data-bs-operation="del">删除</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="form-floating">
+                <textarea th:text="${sql}" class="form-control" id="sqlTextarea" name="sql" style="height: 100px"
+                          required></textarea>
+                <label for="sqlTextarea" class="form-label">SQL</label>
+                <div class="invalid-feedback">
+                    请输入SQL语句
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">执行</button>
+        </div>
+    </form>
+    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div th:text="${errorMessage}"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+
+<div class="container">
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button th:each="tableInfo : ${dbResultList}" th:id="'nav-tab-' + ${tableInfoStat.count}"
+                    th:attr="data-bs-target='#nav-' + ${tableInfoStat.count},aria-controls='nav-' + ${tableInfoStat.count}"
+                    th:text="'Result ' + ${tableInfoStat.count}" th:classappend="${tableInfoStat.first}? 'active'"
+                    class="nav-link" data-bs-toggle="tab" type="button" role="tab" aria-selected="true"></button>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div th:each="tableInfo : ${dbResultList}" th:id="'nav-' + ${tableInfoStat.count}"
+             th:attr="aria-labelledby='nav-tab-' + ${tableInfoStat.count}"
+             th:classappend="${tableInfoStat.first}? 'show active'" class="tab-pane fade table-responsive"
+             role="tabpanel">
+            <table class="table table-bordered table-striped table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th th:each="column : ${tableInfo.columnList}" th:text="${column}" scope="col"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="rowInfo : ${tableInfo.dataList}">
+                    <th scope="row" th:text="${rowInfoStat.count}">index</th>
+                    <th th:each="value : ${rowInfo}" th:text="${value}" scope="col"></th>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div sec:authorize="hasRole('ROLE_ADMIN')" class="modal fade" id="dbSourceSaveModal" tabindex="-1" aria-labelledby="dbSourceSaveModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="dbSourceSaveModalLabel">新增数据源</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/save}" method="post" id="dbSourceForm" class="row g-3 needs-validation" novalidate>
+                    <input type="hidden" th:value="@{/test}" id="testUrlInput">
+                    <input type="hidden" th:value="${dbSourceVersion}" name="dataVersion">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="dbSourceFormId" name="id" autocomplete="off"
+                                   required>
+                            <label for="dbSourceFormId">名称 (Id)</label>
+                            <div class="invalid-feedback">
+                                请填写数据源名称
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select class="form-select" id="dbSourceFormType" name="type" required>
+                                <option selected disabled>Select Database Please</option>
+                                <option value="Oracle">Oracle</option>
+                                <option value="H2">H2</option>
+                                <option value="MariaDB">MariaDB</option>
+                                <option value="MySQL">MySQL</option>
+                                <option value="PostgreSQL">PostgreSQL</option>
+                                <option value="SQLServer">SQLServer</option>
+                                <option value="DB2">DB2</option>
+                            </select>
+                            <label for="dbSourceFormType">类型 (Type)</label>
+                            <div class="invalid-feedback">
+                                请选择数据库类型
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="dbSourceFormUrl" name="url" style="height: 100px"
+                                      required></textarea>
+                            <label for="dbSourceFormUrl">JDBC连接字符串 (Url)</label>
+                            <div class="invalid-feedback">
+                                请输入JDBC连接字符串
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="dbSourceFormUsername" name="username"
+                                   autocomplete="off" required>
+                            <label for="dbSourceFormUsername">用户名 (Username)</label>
+                            <div class="invalid-feedback">
+                                请输入用户名
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="password" class="form-control" id="dbSourceFormPassword" name="password"
+                                   autocomplete="off">
+                            <label for="dbSourceFormPassword">密码 (Password)</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="dbSourceFormTestBtn">测试</button>
+                <button type="button" class="btn btn-primary" id="dbSourceFormSaveBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div sec:authorize="hasRole('ROLE_ADMIN')" class="modal fade" id="dbSourceDeletionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="dbSourceDeletionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="dbSourceDeletionModalLabel">删除数据源</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-message"></div>
+                <form th:action="@{/delete}" method="post" id="dbSourceDeletionForm">
+                    <input type="hidden" id="dbSourceDeletionFormId" name="id">
+                    <input type="hidden" th:value="${dbSourceVersion}" name="dataVersion">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="dbSourceDeletionFormConfirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha256-qFsv4wd3fI60fwah7sOZ/L3f6D0lL9IC0+E1gFH88n0=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.2.1/dist/axios.min.js"
+        integrity="sha256-zhc4rAN+Z5bE/cj+eQZXnA1qLMoJ5XlrrDAgLNflu9A=" crossorigin="anonymous"></script>
+
+<script sec:authorize="hasRole('ROLE_ADMIN')">
+    const dbSourceSaveModal = document.getElementById('dbSourceSaveModal')
+    const saveModalTitle = dbSourceSaveModal.querySelector('.modal-title')
+    const dbSourceForm = dbSourceSaveModal.querySelector('#dbSourceForm')
+    const dbSourceFormId = dbSourceSaveModal.querySelector('#dbSourceFormId')
+    const dbSourceFormType = dbSourceSaveModal.querySelector('#dbSourceFormType')
+    const dbSourceFormUrl = dbSourceSaveModal.querySelector('#dbSourceFormUrl')
+    const dbSourceFormUsername = dbSourceSaveModal.querySelector('#dbSourceFormUsername')
+    const dbSourceFormPassword = dbSourceSaveModal.querySelector('#dbSourceFormPassword')
+    const dbSourceFormSaveBtn = dbSourceSaveModal.querySelector('#dbSourceFormSaveBtn')
+    const testUrlInput = dbSourceSaveModal.querySelector('#testUrlInput')
+    const dbSourceFormTestBtn = dbSourceSaveModal.querySelector('#dbSourceFormTestBtn')
+    dbSourceSaveModal.addEventListener('shown.bs.modal', loadDbSourceToSaveModal)
+    dbSourceFormSaveBtn.addEventListener('click', saveDbSource)
+    dbSourceFormTestBtn.addEventListener('click', testDbSource)
+
+    const dbSourceDeletionModal = document.getElementById('dbSourceDeletionModal')
+    const deletionModalMessage = dbSourceDeletionModal.querySelector('.modal-message')
+    const dbSourceDeletionForm = dbSourceDeletionModal.querySelector('#dbSourceDeletionForm')
+    const dbSourceDeletionFormId = dbSourceDeletionModal.querySelector('#dbSourceDeletionFormId')
+    const dbSourceDeletionFormConfirmBtn = dbSourceDeletionModal.querySelector('#dbSourceDeletionFormConfirmBtn')
+    dbSourceDeletionModal.addEventListener('show.bs.modal', loadDbSourceToDeletionModal)
+    dbSourceDeletionFormConfirmBtn.addEventListener('click', deleteDbSource)
+
+    function loadDbSourceToSaveModal(event) {
+        const button = event.relatedTarget
+        const operation = button.getAttribute('data-bs-operation')
+        const dbSourceIdInput = document.querySelector('input[name=dbSourceId]:checked')
+        dbSourceForm.classList.remove('was-validated')
+        if (operation === 'mod' && dbSourceIdInput) {
+            saveModalTitle.textContent = '修改数据源'
+            dbSourceFormId.value = dbSourceIdInput.value
+            dbSourceFormType.value = dbSourceIdInput.getAttribute('data-bs-type')
+            dbSourceFormUrl.value = dbSourceIdInput.getAttribute('data-bs-url')
+            dbSourceFormUsername.value = dbSourceIdInput.getAttribute('data-bs-username')
+            dbSourceFormPassword.value = ''
+            dbSourceFormId.disabled = true
+            dbSourceFormType.disabled = true
+            dbSourceFormUrl.focus()
+        } else {
+            saveModalTitle.textContent = '新增数据源'
+            dbSourceFormId.value = ''
+            dbSourceFormType.value = ''
+            dbSourceFormUrl.value = ''
+            dbSourceFormUsername.value = ''
+            dbSourceFormPassword.value = ''
+            dbSourceFormId.disabled = false
+            dbSourceFormType.disabled = false
+            dbSourceFormId.focus()
+        }
+    }
+
+    function saveDbSource(event) {
+        if (dbSourceForm.checkValidity()) {
+            dbSourceFormId.disabled = false
+            dbSourceFormType.disabled = false
+            dbSourceForm.submit()
+        } else {
+            dbSourceForm.classList.add('was-validated')
+        }
+    }
+
+    function testDbSource(event) {
+        if (dbSourceForm.checkValidity()) {
+            const button = event.target
+            button.innerHTML = [
+                '<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>',
+                ' 测试中 '
+            ].join('')
+            button.disabled = true
+            const csrfInput = dbSourceForm.querySelector('input[name=_csrf]')
+            axios.post(testUrlInput.value, {
+                id: dbSourceFormId.value,
+                type: dbSourceFormType.value,
+                url: dbSourceFormUrl.value,
+                username: dbSourceFormUsername.value,
+                password: dbSourceFormPassword.value
+            }, {
+                headers: {
+                    "X-CSRF-TOKEN": csrfInput ? csrfInput.value: ""
+                }
+            }).then((response) => {
+                if (response.data.status === 200) {
+                    alert(response.data.result)
+                } else {
+                    alert(response.data.result + '\n' + response.data.error)
+                }
+            }).catch((error) => {
+                alert(error.message)
+            }).finally(() => {
+                button.innerHTML = '测试'
+                button.disabled = false
+            })
+        } else {
+            dbSourceForm.classList.add('was-validated')
+        }
+    }
+
+    function loadDbSourceToDeletionModal(event) {
+        const dbSourceIdInput = document.querySelector('input[name=dbSourceId]:checked')
+        deletionModalMessage.innerHTML = `请确定是否删除<span class="badge text-bg-danger p-2">${dbSourceIdInput.value}</span>数据源？`
+        dbSourceDeletionFormId.value = dbSourceIdInput.value
+    }
+
+    function deleteDbSource(event) {
+        dbSourceDeletionForm.submit()
+    }
+</script>
+
+<script>
+    (() => {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+</body>
+</html>
