@@ -131,7 +131,7 @@ public class DbSourceServiceImpl implements DbSourceService, InitializingBean {
                     .collect(Collectors.toMap(DbSource::getId, this::buildDataSource)));
             cachedVersion.set(1);
         } catch (Exception ex) {
-            log.warn(ex);
+            log.warn(ex, ex);
         }
     }
 
