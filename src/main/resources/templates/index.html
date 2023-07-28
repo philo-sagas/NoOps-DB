@@ -6,8 +6,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>NoOps DB Executor</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
-          integrity="sha256-KTPJY0ik6ufLv48oDKCYFYaptcCX75UrmWytfSjy+tA=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/5.3.1/dist/css/bootstrap.min.css}"
+          integrity="sha256-2TnSHycBDAm2wpZmgdi0z81kykGPJAkiUY+Wf97RbvY=" crossorigin="anonymous">
     <link rel="icon" th:href="@{/favicon.ico}">
     <style>
         .navbar .brand-logo {
@@ -24,7 +24,7 @@
 <nav class="navbar bg-light sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand" th:href="@{/}">
-            <img th:src="@{/noops.png}" alt="Logo" width="24" height="24"
+            <img th:src="@{/assets/noops.png}" alt="Logo" width="24" height="24"
                  class="brand-logo d-inline-block align-text-top">
             NoOps-DB
         </a>
@@ -33,14 +33,18 @@
                 anonymousUser
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" th:href="@{/logout}">退出</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit" class="dropdown-item">退出</button>
+                    </form>
+                </li>
             </ul>
         </div>
     </div>
 </nav>
 
 <div class="container">
-    <form th:action="@{/}" method="post" class="mb-3 needs-validation" novalidate>
+    <form th:action="@{/db}" method="post" class="my-3 needs-validation" novalidate>
         <div class="d-grid gap-3">
             <div class="btn-group" role="group">
                 <th:block th:each="dbSource : ${dbSourceList}">
@@ -126,8 +130,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form th:action="@{/save}" method="post" id="dbSourceForm" class="row g-3 needs-validation" novalidate>
-                    <input type="hidden" th:value="@{/test}" id="testUrlInput">
+                <form th:action="@{/db/save}" method="post" id="dbSourceForm" class="row g-3 needs-validation" novalidate>
+                    <input type="hidden" th:value="@{/db/test}" id="testUrlInput">
                     <input type="hidden" th:value="${dbSourceVersion}" name="dataVersion">
                     <div class="col-md-6">
                         <div class="form-floating">
@@ -204,7 +208,7 @@
             </div>
             <div class="modal-body">
                 <div class="modal-message"></div>
-                <form th:action="@{/delete}" method="post" id="dbSourceDeletionForm">
+                <form th:action="@{/db/delete}" method="post" id="dbSourceDeletionForm">
                     <input type="hidden" id="dbSourceDeletionFormId" name="id">
                     <input type="hidden" th:value="${dbSourceVersion}" name="dataVersion">
                 </form>
@@ -217,10 +221,10 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha256-qFsv4wd3fI60fwah7sOZ/L3f6D0lL9IC0+E1gFH88n0=" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios@1.2.1/dist/axios.min.js"
-        integrity="sha256-zhc4rAN+Z5bE/cj+eQZXnA1qLMoJ5XlrrDAgLNflu9A=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" th:src="@{/webjars/bootstrap/5.3.1/dist/js/bootstrap.bundle.min.js}"
+        integrity="sha256-0upsHgyryiDRjpJLJaHNAYfDi6fDP2CrBuGwQCubzbU=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js" th:src="@{/webjars/axios/1.4.0/dist/axios.min.js}"
+        integrity="sha256-/UzhKodZQoGvzunHOkD+eswoK8yedk+7OvoUgalqCR4=" crossorigin="anonymous"></script>
 
 <script sec:authorize="hasRole('ROLE_ADMIN')">
     const dbSourceSaveModal = document.getElementById('dbSourceSaveModal')

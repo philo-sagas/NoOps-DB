@@ -19,7 +19,7 @@ public class DefaultExceptionHandler {
     public String handleGlobalException(Throwable ex, RedirectAttributes redirectAttributes) {
         log.error(ex, ex);
         redirectAttributes.addFlashAttribute(ERROR_MESSAGE_NAME, ex.getMessage());
-        return "redirect:/";
+        return "redirect:/db";
     }
 
     @ExceptionHandler(DbQueryException.class)

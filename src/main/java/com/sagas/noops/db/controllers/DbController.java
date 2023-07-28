@@ -24,9 +24,8 @@ import java.util.List;
 
 @Log4j2
 @Controller
+@RequestMapping("/db")
 public class DbController {
-    public static final String VERSION = "1.0";
-
     @Autowired
     private SessionHelper sessionHelper;
 
@@ -36,7 +35,7 @@ public class DbController {
     @Autowired
     private DbQueryService dbQueryService;
 
-    @RequestMapping("/")
+    @RequestMapping
     public String execute(DbParam dbParam, Model model, RedirectAttributes redirectAttributes) {
         model.addAttribute("dbSourceList", dbSourceService.getAll());
         model.addAttribute("dbSourceVersion", dbSourceService.getDataVersion());
@@ -55,7 +54,7 @@ public class DbController {
         } catch (Throwable t) {
             throw new DbQueryException(t, sql);
         }
-        return "redirect:/";
+        return "redirect:/db";
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -66,7 +65,7 @@ public class DbController {
         Assert.hasText(dbSource.getUrl(), "Url不能为空");
         Assert.hasText(dbSource.getUsername(), "Username不能为空");
         dbSourceService.save(dbSource, dataVersion);
-        return "redirect:/";
+        return "redirect:/db";
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -74,7 +73,7 @@ public class DbController {
     public String delete(String id, int dataVersion) {
         Assert.hasText(id, "Id不能为空");
         dbSourceService.delete(id, dataVersion);
-        return "redirect:/";
+        return "redirect:/db";
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -93,16 +92,5 @@ public class DbController {
             log.warn(ex);
             return ResultModel.failure("连接失败！", ex.getMessage());
         }
-    }
-
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @ResponseBody
-    @GetMapping("/version")
-    public ResultModel<VersionResult> version() {
-        String os = System.getProperty("os.name");
-        VersionResult versionResult = new VersionResult();
-        versionResult.setVersion(VERSION);
-        versionResult.setOs(os);
-        return ResultModel.success(versionResult);
     }
 }

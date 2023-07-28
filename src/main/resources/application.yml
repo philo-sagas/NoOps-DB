@@ -3,6 +3,10 @@ server:
   servlet:
     context-path: /NoOps-DB
 
+#logging:
+#  level:
+#    org.springframework.security: trace
+
 NoOpsDB:
   cached-path: DbSource.db
   admin-password: admin123
