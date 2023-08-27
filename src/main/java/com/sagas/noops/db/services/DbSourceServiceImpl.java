@@ -5,7 +5,6 @@ import com.sagas.noops.db.constants.DbSourceType;
 import com.sagas.noops.db.entities.DbSource;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.stereotype.Service;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Log4j2
 @Service
-public class DbSourceServiceImpl implements DbSourceService, InitializingBean {
+public class DbSourceServiceImpl implements DbSourceService {
     private static final String PLACEHOLDER = "♡";
 
     private static final CopyOnWriteArrayList<DbSource> cachedDbSourceList = new CopyOnWriteArrayList<>();
@@ -37,18 +37,13 @@ public class DbSourceServiceImpl implements DbSourceService, InitializingBean {
     private ApplicationConstants applicationConstants;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        loadCachedDataSourceList();
-    }
-
-    @Override
     public List<DbSource> getAll() {
         return cachedDbSourceList.stream().toList();
     }
 
     @Override
-    public DbSource getBy(String id) {
-        return cachedDbSourceList.stream().filter(dbSource -> dbSource.getId().equals(id)).findAny().orElse(null);
+    public Optional<DbSource> getBy(String id) {
+        return cachedDbSourceList.stream().filter(dbSource -> dbSource.getId().equals(id)).findAny();
     }
 
     @Override
@@ -111,7 +106,8 @@ public class DbSourceServiceImpl implements DbSourceService, InitializingBean {
         return cachedVersion.get();
     }
 
-    private void loadCachedDataSourceList() {
+    @Override
+    public void loadCachedDataSourceList() {
         try {
             Path path = getCachedPath();
             List<String> lines = Files.readAllLines(path);

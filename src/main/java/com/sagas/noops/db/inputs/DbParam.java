@@ -6,5 +6,5 @@ import lombok.Data;
 public class DbParam {
     private String sql;
 
-    private String dbSourceId;
+    private String dbSourceId = "";
 }

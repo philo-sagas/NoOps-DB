@@ -43,8 +43,8 @@
     </div>
 </nav>
 
-<div class="container">
-    <form th:action="@{/db}" method="post" class="my-3 needs-validation" novalidate>
+<div class="container my-3">
+    <form th:action="@{/db}" method="post" class="needs-validation" novalidate>
         <div class="d-grid gap-3">
             <div class="btn-group" role="group">
                 <th:block th:each="dbSource : ${dbSourceList}">
@@ -83,7 +83,7 @@
             <button type="submit" class="btn btn-primary">执行</button>
         </div>
     </form>
-    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
         <div th:text="${errorMessage}"></div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>

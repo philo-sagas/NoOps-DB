@@ -31,8 +31,8 @@
     </div>
 </nav>
 
-<div class="container w-25">
-    <form th:action="@{/logout}" method="post" class="my-3">
+<div class="container my-3 w-25">
+    <form th:action="@{/logout}" method="post">
         <div class="d-grid gap-3">
             <div class="alert alert-warning" role="alert">
                 您确定要登出<span sec:authentication="name" class="badge text-bg-warning">anonymousUser</span>账号吗？

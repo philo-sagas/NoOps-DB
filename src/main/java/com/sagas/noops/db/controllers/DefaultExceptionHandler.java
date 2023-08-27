@@ -1,5 +1,6 @@
-package com.sagas.noops.db.exceptions;
+package com.sagas.noops.db.controllers;
 
+import com.sagas.noops.db.exceptions.DbQueryException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -15,7 +16,7 @@ public class DefaultExceptionHandler {
     public static final String SQL_NAME = "sql";
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.FOUND)
     public String handleGlobalException(Throwable ex, RedirectAttributes redirectAttributes) {
         log.error(ex, ex);
         redirectAttributes.addFlashAttribute(ERROR_MESSAGE_NAME, ex.getMessage());

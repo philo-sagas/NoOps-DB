@@ -5,7 +5,6 @@ import com.sagas.noops.db.exceptions.DbQueryException;
 import com.sagas.noops.db.inputs.DbParam;
 import com.sagas.noops.db.outputs.DbResult;
 import com.sagas.noops.db.outputs.ResultModel;
-import com.sagas.noops.db.outputs.VersionResult;
 import com.sagas.noops.db.services.DbQueryService;
 import com.sagas.noops.db.services.DbSourceService;
 import com.sagas.noops.db.support.SessionHelper;
@@ -16,11 +15,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Assert;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.Optional;
 
 @Log4j2
 @Controller
@@ -83,8 +86,8 @@ public class DbController {
         try {
             if (StringUtils.isBlank(dbSource.getPassword())
                     && StringUtils.isNotBlank(dbSource.getId())) {
-                DbSource ds = dbSourceService.getBy(dbSource.getId());
-                dbSource.setPassword(ds.getPassword());
+                Optional<DbSource> existsDbSource = dbSourceService.getBy(dbSource.getId());
+                existsDbSource.ifPresent(ds -> dbSource.setPassword(ds.getPassword()));
             }
             dbQueryService.testConnection(dbSource);
             return ResultModel.success("连接成功。");

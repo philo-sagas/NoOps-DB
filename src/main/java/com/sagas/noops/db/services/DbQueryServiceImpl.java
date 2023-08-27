@@ -2,8 +2,6 @@ package com.sagas.noops.db.services;
 
 import com.sagas.noops.db.entities.DbSource;
 import com.sagas.noops.db.outputs.DbResult;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -15,16 +13,14 @@ import java.util.List;
 
 @Service
 public class DbQueryServiceImpl implements DbQueryService {
-    private JdbcTemplate jdbcTemplate = new JdbcTemplate();
-
     @Override
     public List<DbResult> execute(String sql, DataSource dataSource) {
         List<DbResult> dbResultList = new LinkedList<>();
-        jdbcTemplate.setDataSource(dataSource);
-        jdbcTemplate.execute((StatementCallback<?>) stmt -> {
-            stmt.execute(sql);
+        try (Connection connection = dataSource.getConnection()) {
+            Statement statement = connection.createStatement();
+            statement.execute(sql);
             do {
-                ResultSet resultSet = stmt.getResultSet();
+                ResultSet resultSet = statement.getResultSet();
                 if (resultSet != null) {
                     ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
                     int columnCount = resultSetMetaData.getColumnCount();
@@ -45,16 +41,18 @@ public class DbQueryServiceImpl implements DbQueryService {
                     dbResult.setDataList(dataList);
                     dbResultList.add(dbResult);
                 }
-                int updateCount = stmt.getUpdateCount();
+                int updateCount = statement.getUpdateCount();
                 if (updateCount != -1) {
                     DbResult dbResult = new DbResult();
                     dbResult.setColumnList(Arrays.asList("Affected Rows"));
                     dbResult.setDataList(Arrays.asList(Arrays.asList(updateCount)));
                     dbResultList.add(dbResult);
                 }
-            } while (stmt.getMoreResults() || stmt.getUpdateCount() != -1);
-            return dbResultList;
-        });
+            } while (statement.getMoreResults() || statement.getUpdateCount() != -1);
+            statement.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         return dbResultList;
     }
 

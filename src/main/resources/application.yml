@@ -8,6 +8,6 @@ server:
 #    org.springframework.security: trace
 
 NoOpsDB:
-  cached-path: DbSource.db
+  cached-path: DbSource.conf
   admin-password: admin123
   guest-password: guest123

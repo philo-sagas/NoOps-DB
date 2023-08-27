@@ -4,11 +4,12 @@ import com.sagas.noops.db.entities.DbSource;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.Optional;
 
 public interface DbSourceService {
     List<DbSource> getAll();
 
-    DbSource getBy(String id);
+    Optional<DbSource> getBy(String id);
 
     boolean save(DbSource dbSource, int dataVersion);
 
@@ -17,4 +18,6 @@ public interface DbSourceService {
     DataSource findDataSource(String dbSourceId);
 
     int getDataVersion();
+
+    void loadCachedDataSourceList();
 }
