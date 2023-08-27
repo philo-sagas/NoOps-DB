@@ -15,7 +15,7 @@ public class DefaultExceptionHandler {
     public static final String SQL_NAME = "sql";
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.FOUND)
     public String handleGlobalException(Throwable ex, RedirectAttributes redirectAttributes) {
         log.error(ex, ex);
         redirectAttributes.addFlashAttribute(ERROR_MESSAGE_NAME, ex.getMessage());
